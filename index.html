@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tájfutó Térképek Vizualizációja</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>🧭 Tájfutó térképek</h1>
+    </header>
+
+    <main>
+        <div id="map-container">
+            
+
+[Image of a base map of Hungary]
+
+            <img src="alap_magyarorszag_terkep.png" alt="Magyarország Alaptérkép" id="base-map">
+
+            <div id="overlay-container">
+                </div>
+        </div>
+
+        <div id="controls">
+            <h2>Készült térképek megjelenítése (2007-2024)</h2>
+            <div class="slider-group">
+                <label for="startYear">Kezdő év: <span id="startYearDisplay">2000</span></label>
+                <input type="range" id="startYear" min="2007" max="2024" value="2007">
+            </div>
+            <div class="slider-group">
+                <label for="endYear">Befejező év: <span id="endYearDisplay">2024</span></label>
+                <input type="range" id="endYear" min="2007" max="2024" value="2024">
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

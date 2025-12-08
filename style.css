@@ -1,0 +1,41 @@
+#map-container {
+    position: relative; /* Ez adja meg a referencia pontot az abszolút pozícionáláshoz */
+    width: 1000px; /* Állítsd be a kívánt szélességet */
+    height: 600px; /* Állítsd be a kívánt magasságot */
+    margin: 20px auto; /* Középre igazítás */
+}
+
+#base-map, #overlay-container, #overlay-container img {
+    position: absolute; /* Minden réteg egymáson jelenik meg */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#overlay-container {
+    /* Az átlátszó PNG-k ide kerülnek. 
+       Fontos, hogy az alap térkép fölött legyen. */
+    z-index: 10; 
+}
+
+/* Általános stílusok a megjelenéshez */
+body {
+    font-family: sans-serif;
+    text-align: center;
+    background-color: #f4f4f9;
+}
+
+header {
+    background-color: #333;
+    color: white;
+    padding: 10px 0;
+}
+
+h1 {
+    margin: 0;
+}
+
+.slider-group {
+    margin: 15px 0;
+}
