@@ -1,66 +1,113 @@
-// 1. Változók beállítása
-const startYearSlider = document.getElementById('startYear');
-const endYearSlider = document.getElementById('endYear');
-const startYearDisplay = document.getElementById('startYearDisplay');
-const endYearDisplay = document.getElementById('endYearDisplay');
+let tajfutoAdatok = {};
+
+// Az adatok betöltése javítva
+fetch('adatok.json')
+    .then(response => response.json())
+    .then(data => {
+        tajfutoAdatok = data.tajfuto_adatok; 
+        console.log("Adatok használatra készen:", tajfutoAdatok);
+        updateMap();
+    })
+    .catch(error => console.error('Hiba:', error));
+
 const overlayContainer = document.getElementById('overlay-container');
+const startSlider = document.getElementById('startYear');
+const endSlider = document.getElementById('endYear');
 
-// A szükséges évszámok tartománya
-const MIN_YEAR = 2007;
-const MAX_YEAR = 2024;
-
-// 2. Képek előkészítése és egyszeri beillesztése a DOM-ba
-// Ez a függvény csak egyszer fut le az oldal betöltésekor.
-function setupImages() {
-    for (let year = MIN_YEAR; year <= MAX_YEAR; year++) {
-        // A képeket el kell nevezned pl. "map_2000.png", "map_2001.png" stb.
-        const img = document.createElement('img');
-        img.src = `maps/map_${year}.png`; // Feltételezve, hogy van egy 'maps' mappa
-        img.alt = `Tájfutó térkép ${year}`;
-        img.id = `map_${year}`;
-        img.className = 'overlay-map'; // A CSS-ben állítható stílushoz
-        img.style.display = 'none'; // Alapból rejtve
-        overlayContainer.appendChild(img);
-    }
-}
-
-// 3. Frissítési logika
 function updateMap() {
-    // Értékek beolvasása és megjelenítése
-    let startYear = parseInt(startYearSlider.value);
-    let endYear = parseInt(endYearSlider.value);
+    // Ellenőrizzük, hogy vannak-e már adatok
+    if (Object.keys(tajfutoAdatok).length === 0) return;
 
-    // Biztosítjuk, hogy a kezdő év ne legyen nagyobb, mint a befejező év
-    if (startYear > endYear) {
-        startYear = endYear;
-        startYearSlider.value = endYear;
-    }
+    let start = parseInt(startSlider.value);
+    let end = parseInt(endSlider.value);
 
-    startYearDisplay.textContent = startYear;
-    endYearDisplay.textContent = endYear;
-    
-    // Iteráció az összes lehetséges éven
-    for (let year = MIN_YEAR; year <= MAX_YEAR; year++) {
-        const mapElement = document.getElementById(`map_${year}`);
-        
-        if (mapElement) {
-            // Megjelenítés, ha az év a kiválasztott tartományban van
-            if (year >= startYear && year <= endYear) {
-                mapElement.style.display = 'block';
-            } else {
-                // Elrejtés, ha nincs a tartományban
-                mapElement.style.display = 'none';
-            }
+    // Kijelző frissítése
+    document.getElementById('startYearDisplay').textContent = start;
+    document.getElementById('endYearDisplay').textContent = end;
+
+    // Térkép tisztítása
+    overlayContainer.innerHTML = '';
+
+    for (let ev = start; ev <= end; ev++) {
+        // Ellenőrizzük, hogy az adott év létezik-e az adatokban
+        if (tajfutoAdatok && tajfutoAdatok[ev]) {
+            tajfutoAdatok[ev].forEach(pont => {
+                const dot = document.createElement('div');
+                dot.className = 'map-dot';
+                dot.style.left = pont.x + '%';
+                dot.style.top = pont.y + '%';
+                overlayContainer.appendChild(dot);
+            });
         }
     }
 }
 
-// 4. Eseményfigyelők
-startYearSlider.addEventListener('input', updateMap);
-endYearSlider.addEventListener('input', updateMap);
+let scale = 1;
+const zoomSpeed = 0.1;
+const maxScale = 5;
+const minScale = 1;
 
-// Indítás az oldal betöltésekor
-document.addEventListener('DOMContentLoaded', () => {
-    setupImages();
-    updateMap(); // Kezdeti állapot megjelenítése (2000-2024)
+const viewport = document.getElementById('map-viewport');
+const container = document.getElementById('map-container');
+
+viewport.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const zoomSpeed = 0.1;
+    
+    if (e.deltaY < 0) {
+        scale = Math.min(scale + zoomSpeed, 5);
+    } else {
+        scale = Math.max(scale - zoomSpeed, 1);
+    }
+
+    updateTransform(); // Ezt használd a sima transform helyett!
+    
+    // Opcionális: a pöttyök méretének korrigálása, hogy ne legyenek túl óriásiak nagyításkor
+    const dots = document.querySelectorAll('.map-dot');
+    dots.forEach(dot => {
+        dot.style.width = (10 / scale) + 'px';
+        dot.style.height = (10 / scale) + 'px';
+    });
 });
+
+let isDragging = false;
+let startX, startY;
+let translateX = 0;
+let translateY = 0;
+
+// A viewport és container már definiálva van a zoom kódnál
+viewport.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    viewport.style.cursor = 'grabbing';
+    // Elmentjük a kezdőpozíciót az egérhez és a jelenlegi eltoláshoz képest
+    startX = e.clientX - translateX;
+    startY = e.clientY - translateY;
+});
+
+window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+
+    // Kiszámoljuk az új pozíciót
+    translateX = e.clientX - startX;
+    translateY = e.clientY - startY;
+
+    // Alkalmazzuk a mozgást és a nagyítást egyszerre
+    updateTransform();
+});
+
+window.addEventListener('mouseup', () => {
+    isDragging = false;
+    viewport.style.cursor = 'grab';
+});
+
+// Ez a függvény felelős a végső megjelenítésért
+function updateTransform() {
+    container.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+}
+
+// A zoom függvényedben is cseréld le a container.style.transform sort erre:
+// updateTransform();
+
+// Eseményfigyelők
+startSlider.addEventListener('input', updateMap);
+endSlider.addEventListener('input', updateMap);
